@@ -42,3 +42,12 @@ jobs:
 
       - name: Build Packages
         run: bun run build:packages
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: audioling-build
+          path: |
+            apps/web/dist/
+            apps/server/dist/
+            src-tauri/target/release/
