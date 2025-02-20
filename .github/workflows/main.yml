@@ -1,4 +1,4 @@
-name: Build and Run Audioling
+name: Build Audioling
 
 on:
   push:
@@ -20,7 +20,13 @@ jobs:
       - name: Install Rust and Tauri Dependencies
         shell: powershell
         run: |
-          iwr -useb https://win.rustup.rs | iex
+          # Download Rust installer safely and execute it
+          Invoke-WebRequest -Uri "https://win.rustup.rs" -OutFile "rustup-init.exe"
+          Start-Process -Wait -NoNewWindow -FilePath ".\rustup-init.exe" -ArgumentList "-y"
+          Remove-Item -Force .\rustup-init.exe
+          
+          # Update Rust and add required targets
+          refreshenv
           rustup update
           rustup default stable
           rustup target add x86_64-pc-windows-msvc
@@ -36,9 +42,3 @@ jobs:
 
       - name: Build Packages
         run: bun run build:packages
-
-      - name: Run Web & Server Apps
-        shell: powershell
-        run: |
-          Start-Process -NoNewWindow -FilePath "bun" -ArgumentList "run dev" -WorkingDirectory "./apps/web"
-          Start-Process -NoNewWindow -FilePath "bun" -ArgumentList "run dev" -WorkingDirectory "./apps/server"
