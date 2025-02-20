@@ -1,0 +1,48 @@
+name: Build and Run Audioling
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        shell: powershell
+        run: |
+          irm https://bun.sh/install | iex
+          echo "$HOME/.bun/bin" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+
+      - name: Install Rust and Tauri Dependencies
+        shell: powershell
+        run: |
+          iwr -useb https://win.rustup.rs | iex
+          rustup update
+          rustup default stable
+          rustup target add x86_64-pc-windows-msvc
+          
+          # Install Tauri CLI
+          cargo install tauri-cli
+          
+          # Install Windows build dependencies
+          choco install -y visualstudio2022buildtools visualstudio2022-workload-vctools
+
+      - name: Install Project Dependencies
+        run: bun install
+
+      - name: Build Packages
+        run: bun run build:packages
+
+      - name: Run Web & Server Apps
+        shell: powershell
+        run: |
+          Start-Process -NoNewWindow -FilePath "bun" -ArgumentList "run dev" -WorkingDirectory "./apps/web"
+          Start-Process -NoNewWindow -FilePath "bun" -ArgumentList "run dev" -WorkingDirectory "./apps/server"
+
