@@ -39,7 +39,7 @@
     },
     "plugins": {
         "updater": {
-            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQwQUM2NTY0QjFGQ0IyNEYKUldSUHN2eXhaR1dzUUxVSHl6VjhVZ05Fb0NkQ0xPRENKNzhKdzZQc1Z0OVpQS3IzTDR4bmd4aWcK",
+            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDM4RTcxQTJCODdBRjY4ODIKUldTQ2FLK0hLeHJuT0lyWXl1T0k4NjhqRVk3UW9JcmVPQjJ1aTZPNmQrTXFSa214RWFXWnZTYXYK",
             "endpoints": [
                 "https://github.com/audioling/audioling/releases/latest/download/latest.json"
             ],
