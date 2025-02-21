@@ -52,13 +52,11 @@ jobs:
         run: bun run deploy:server:macos
 
       - name: Build Tauri App
-        uses: tauri-apps/tauri-action@v0.5.16
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          projectPath: './apps/web'
-          args: ${{ matrix.args }}
-          tauriScript: 'bun run tauri'
+        working-directory: ./apps/web
+        run: |
+          # Temporarily disable updater and signing
+          sed -i.bak 's/"active": true/"active": false/' src-tauri/tauri.conf.json
+          bun run tauri build ${{ matrix.args }}
 
       # Upload artifacts for each platform
       - name: Upload Server Artifacts
