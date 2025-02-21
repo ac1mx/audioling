@@ -1,45 +1,44 @@
-name: Build and Upload Audioling
+name: Build and Upload Artifacts
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-latest
-
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Install Bun
-        run: |
-          iwr -useb https://bun.sh/install | iex
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
 
-      - name: Install Rust and Tauri dependencies
-        run: |
-          iwr -useb https://win.rustup.rs | iex
-          rustup install stable
-          rustup default stable
-          cargo install tauri-cli
-
-      - name: Clone the audioling repo
-        run: git clone https://github.com/ac1mx/audioling.git
-
-      - name: Install dependencies
-        working-directory: audioling
+      - name: Install Dependencies
         run: bun install
 
-      - name: Build packages
-        working-directory: audioling
+      - name: Build Packages
         run: bun run build:packages
 
-      - name: Upload build artifacts
+      - name: Build Apps
+        run: bun run build:apps
+
+      # Upload server artifacts
+      - name: Upload Server Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: audioling-artifacts
-          path: |
-            audioling/apps/web/dist/
-            audioling/apps/server/dist/
-            audioling/src-tauri/target/release/
+          name: server-build
+          path: apps/server/dist
+          retention-days: 7
+
+      # Upload web artifacts
+      - name: Upload Web Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: apps/web/dist
+          retention-days: 7
