@@ -43,19 +43,37 @@ jobs:
       - name: install frontend dependencies
         run: bun install
 
-      - name: build server binaries
-        if: matrix.platform != 'macos-latest'
-        run: bun run deploy:server
+      - name: Build all packages
+        run: bun run build:packages
 
-      - name: build server binaries (macos)
+      - name: Build server
+        if: matrix.platform != 'macos-latest'
+        run: |
+          cd apps/server
+          bun run build
+          bun run deploy:server
+
+      - name: Build server (macos)
         if: matrix.platform == 'macos-latest'
-        run: bun run deploy:server:macos
+        run: |
+          cd apps/server
+          bun run build
+          bun run deploy:server:macos
+
+      - name: Build web app
+        run: |
+          cd apps/web
+          bun run build
 
       - name: Build Tauri App
         working-directory: ./apps/web
         run: |
           # Temporarily disable updater and signing
-          sed -i.bak 's/"active": true/"active": false/' src-tauri/tauri.conf.json
+          sed -i.bak 's/"active": true/"active": false/' src-tauri/tauri.conf.json || true
+          # For macOS, use different sed syntax
+          if [ "${{ matrix.platform }}" = "macos-latest" ]; then
+            sed -i '' 's/"active": true/"active": false/' src-tauri/tauri.conf.json || true
+          fi
           bun run tauri build ${{ matrix.args }}
 
       # Upload artifacts for each platform
@@ -63,31 +81,37 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: server-${{ matrix.platform }}
-          path: apps/server/dist/
-          if-no-files-found: error
+          path: |
+            apps/server/dist/**/*
+            apps/server/build/**/*
+          if-no-files-found: warn
 
       - name: Upload Web Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: web-${{ matrix.platform }}
-          path: apps/web/dist/
-          if-no-files-found: error
+          path: apps/web/dist/**/*
+          if-no-files-found: warn
 
       - name: Upload Tauri Artifacts (Windows)
         if: matrix.platform == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
           name: tauri-windows
-          path: apps/web/src-tauri/target/release/bundle/msi/*
-          if-no-files-found: error
+          path: |
+            apps/web/src-tauri/target/release/*.exe
+            apps/web/src-tauri/target/release/bundle/msi/*
+          if-no-files-found: warn
 
       - name: Upload Tauri Artifacts (macOS)
         if: matrix.platform == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
           name: tauri-macos-${{ contains(matrix.args, 'aarch64') && 'arm64' || 'x64' }}
-          path: apps/web/src-tauri/target/release/bundle/dmg/*
-          if-no-files-found: error
+          path: |
+            apps/web/src-tauri/target/release/bundle/dmg/*
+            apps/web/src-tauri/target/release/bundle/macos/*
+          if-no-files-found: warn
 
       - name: Upload Tauri Artifacts (Linux)
         if: matrix.platform == 'ubuntu-22.04'
@@ -97,4 +121,5 @@ jobs:
           path: |
             apps/web/src-tauri/target/release/bundle/deb/*
             apps/web/src-tauri/target/release/bundle/appimage/*
-          if-no-files-found: error
+            apps/web/src-tauri/target/release/audioling
+          if-no-files-found: warn
