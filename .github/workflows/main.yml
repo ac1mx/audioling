@@ -1,57 +1,45 @@
-name: Build Audioling
+name: Build and Upload Audioling
 
 on:
   push:
     branches:
       - main
-  pull_request:
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
       - name: Install Bun
-        run: npm install -g bun
-
-      - name: Install Rust and Tauri Dependencies
-        shell: powershell
         run: |
-          # Download Rust installer safely and execute it
-          Invoke-WebRequest -Uri "https://win.rustup.rs" -OutFile "rustup-init.exe"
-          Start-Process -Wait -NoNewWindow -FilePath ".\rustup-init.exe" -ArgumentList "-y"
-          Remove-Item -Force .\rustup-init.exe
-          
-          # Update Rust and add required targets
-          refreshenv
-          rustup update
-          rustup default stable
-          rustup target add x86_64-pc-windows-msvc
-          
-          # Install Tauri CLI
-          cargo install tauri-cli
-          
-          # Install Windows build dependencies
-          choco install -y visualstudio2022buildtools visualstudio2022-workload-vctools
+          iwr -useb https://bun.sh/install | iex
 
-      - name: Install Project Dependencies
+      - name: Install Rust and Tauri dependencies
+        run: |
+          iwr -useb https://win.rustup.rs | iex
+          rustup install stable
+          rustup default stable
+          cargo install tauri-cli
+
+      - name: Clone the audioling repo
+        run: git clone https://github.com/ac1mx/audioling.git
+
+      - name: Install dependencies
+        working-directory: audioling
         run: bun install
 
-      - name: Build Packages
+      - name: Build packages
+        working-directory: audioling
         run: bun run build:packages
 
-      - name: Debug Build Output
-        run: Get-ChildItem -Recurse
-        shell: powershell
-
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v2
         with:
-          name: audioling-build
+          name: audioling-artifacts
           path: |
-            apps/web/dist/
-            apps/server/dist/
-            src-tauri/target/release/
+            audioling/apps/web/dist/
+            audioling/apps/server/dist/
+            audioling/src-tauri/target/release/
